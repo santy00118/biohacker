@@ -1,1 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIOHACKER® — Página en Construcción</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-clinical: #F9F8F6;
+      --bg-surface: #FFFFFF;
+      --bio-crimson: #B21D28;
+      --bio-crimson-dark: #8A141D;
+      --bio-crimson-soft: rgba(178, 29, 40, 0.08);
+      --bio-crimson-border: rgba(178, 29, 40, 0.22);
+      --text-primary: #1F191A;
+      --text-muted: #6E6264;
+    }
 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-clinical);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Retícula microscópica de laboratorio */
+    .lab-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(178, 29, 40, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(178, 29, 40, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Viñeta suave para enfocar el centro */
+    .lab-vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 35%, var(--bg-clinical) 95%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Canvas de red molecular / celular */
+    #bio-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Marcas de calibración en las esquinas */
+    .hud-corner {
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      border-color: var(--bio-crimson-border);
+      border-style: solid;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .hud-tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
+    .hud-tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
+    .hud-bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
+    .hud-br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
+
+    /* Barra superior técnica */
+    header {
+      position: relative;
+      z-index: 4;
+      padding: 28px 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--bio-crimson-border);
+      border-radius: 999px;
+      color: var(--bio-crimson);
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(178, 29, 40, 0.04);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--bio-crimson);
+      position: relative;
+    }
+
+    .pulse-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid var(--bio-crimson);
+      animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* Contenedor central */
+    main {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .logo-wrapper {
+      position: relative;
+      margin-bottom: 36px;
+      padding: 16px;
+      animation: floatSlow 6s ease-in-out infinite;
+    }
+
+    .logo-wrapper img {
+      max-width: 440px;
+      width: 100%;
+      height: auto;
+      display: block;
+      /* Integra el fondo claro del PNG con el fondo de la página */
+      mix-blend-mode: multiply;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* Separador tipo secuencia genética */
+    .dna-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .dna-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--bio-crimson-border), transparent);
+    }
+
+    .dna-node {
+      width: 6px;
+      height: 6px;
+      transform: rotate(45deg);
+      background-color: var(--bio-crimson);
+    }
+
+    /* Tarjeta de estado */
+    .construction-box {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--bio-crimson-border);
+      border-radius: 16px;
+      padding: 28px 40px;
+      box-shadow: 0 12px 32px rgba(178, 29, 40, 0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Línea de escaneo sutil superior */
+    .construction-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--bio-crimson), transparent);
+      animation: scanLine 4s linear infinite;
+    }
+
+    @keyframes scanLine {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    h1 {
+      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      font-weight: 700;
+      color: var(--bio-crimson);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .trademark-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* Barra de progreso biotecnológica */
+    .progress-track {
+      width: 180px;
+      height: 3px;
+      background: var(--bio-crimson-soft);
+      border-radius: 99px;
+      margin: 20px auto 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      width: 45%;
+      height: 100%;
+      background: var(--bio-crimson);
+      border-radius: 99px;
+      animation: bioSequence 2.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bioSequence {
+      0% { transform: translateX(-20%); }
+      100% { transform: translateX(140%); }
+    }
+
+    /* Pie de página */
+    footer {
+      position: relative;
+      z-index: 4;
+      padding: 24px 44px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 20px 24px; justify-content: center; }
+      .sys-code { display: none; }
+      .construction-box { padding: 24px 24px; }
+      .hud-corner { width: 16px; height: 16px; }
+      .hud-tl { top: 14px; left: 14px; }
+      .hud-tr { top: 14px; right: 14px; }
+      .hud-bl { bottom: 14px; left: 14px; }
+      .hud-br { bottom: 14px; right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lab-grid"></div>
+  <canvas id="bio-canvas"></canvas>
+  <div class="lab-vignette"></div>
+
+  <!-- Marcas de visor óptico -->
+  <div class="hud-corner hud-tl"></div>
+  <div class="hud-corner hud-tr"></div>
+  <div class="hud-corner hud-bl"></div>
+  <div class="hud-corner hud-br"></div>
+
+  <header>
+    <span class="sys-code">SYS // BIO-SYNTHESIS v1.0</span>
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      <span>EN DESARROLLO</span>
+    </div>
+    <span class="sys-code">SEQ // 00-BH-2026</span>
+  </header>
+
+  <main>
+    <div class="logo-wrapper">
+      <img src="logobiohacker.png" alt="BIOHACKER®" />
+    </div>
+
+    <div class="dna-divider">
+      <span class="dna-line"></span>
+      <span class="dna-node"></span>
+      <span class="dna-line"></span>
+    </div>
+
+    <div class="construction-box">
+      <h1>Página en construcción</h1>
+      <p class="trademark-text">BIOHACKER® — Marca Registrada</p>
+      <div class="progress-track">
+        <div class="progress-bar"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; <span id="year"></span> BIOHACKER® · Todos los derechos reservados · Marca Registrada
+  </footer>
+
+  <script>
+    // Año dinámico
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Animación de red molecular / enlaces celulares en Canvas
+    const canvas = document.getElementById('bio-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, particles;
+
+    const CRIMSON = '178, 29, 40';
+
+    function init() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      const count = Math.min(Math.floor((width * height) / 18000), 65);
+      particles = [];
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.45,
+          vy: (Math.random() - 0.5) * 0.45,
+          radius: Math.random() * 2.2 + 1.2,
+          isNucleus: Math.random() > 0.78
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        // Conexiones sinápticas / moleculares
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 145) {
+            const alpha = (1 - dist / 145) * 0.16;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(${CRIMSON}, ${alpha})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+
+        // Nodo celular
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${CRIMSON}, ${p.isNucleus ? 0.38 : 0.18})`;
+        ctx.fill();
+
+        // Membrana externa en nodos principales
+        if (p.isNucleus) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius + 4, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(${CRIMSON}, 0.12)`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', init);
+    init();
+    draw();
+  </script>
+</body>
+</html>
